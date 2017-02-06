@@ -56,6 +56,8 @@ endif()
 llvm_map_components_to_libnames(llvm_libs ${llvm_raw_libs})
 llvm_expand_dependencies(expanded_libs ${llvm_libs})
 
+set(llvm_raw_libs all)
+
 # order is important
 set(clang_libs ${libclangFrontend} ${libclangSerialization} ${libclangDriver} ${libclangParse}
   ${libclangSema} ${libclangCodeGen} ${libclangAnalysis} ${libclangRewrite} ${libclangEdit}
