@@ -11,6 +11,13 @@ include(cmake/GetGitRevisionDescription.cmake)
 include(cmake/version.cmake)
 include(GNUInstallDirs)
 
+option(MULTILIB_LIB64 "use lib64 instead of lib to find library" OFF)
+if(MULTILIB_LIB64)
+  set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE)
+else()
+  set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS FALSE)
+endif()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if(NOT PYTHON_ONLY)
