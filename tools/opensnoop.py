@@ -17,6 +17,7 @@ from __future__ import print_function
 from bcc import BPF
 import argparse
 import ctypes as ct
+import subprocess
 
 # arguments
 examples = """examples:
@@ -68,7 +69,7 @@ struct data_t {
 BPF_HASH(infotmp, u64, struct val_t);
 BPF_PERF_OUTPUT(events);
 
-int trace_entry(struct pt_regs *ctx, const char __user *filename)
+TRACE_ENTRY
 {
     struct val_t val = {};
     u64 id = bpf_get_current_pid_tgid();
@@ -111,6 +112,19 @@ int trace_return(struct pt_regs *ctx)
     return 0;
 }
 """
+
+sys_open = "sys_open"
+trace_entry = "int trace_entry(struct pt_regs *ctx, \
+                               const char __user *filename)"
+
+arch = subprocess.Popen(["uname", "-m"], stdout=subprocess.PIPE).stdout.read()
+if arch[:7] == "aarch64":
+    sys_open = "sys_openat"
+    trace_entry = "int trace_entry(struct pt_regs *ctx, \
+                    int __user dirfd, const char __user *filename)"
+
+bpf_text = bpf_text.replace('TRACE_ENTRY', '%s' % trace_entry)
+
 if args.tid:  # TID trumps PID
     bpf_text = bpf_text.replace('FILTER',
         'if (tid != %s) { return 0; }' % args.tid)
@@ -124,8 +138,8 @@ if debug:
 
 # initialize BPF
 b = BPF(text=bpf_text)
-b.attach_kprobe(event="sys_open", fn_name="trace_entry")
-b.attach_kretprobe(event="sys_open", fn_name="trace_return")
+b.attach_kprobe(event=sys_open, fn_name="trace_entry")
+b.attach_kretprobe(event=sys_open, fn_name="trace_return")
 
 TASK_COMM_LEN = 16    # linux/sched.h
 NAME_MAX = 255        # linux/limits.h
